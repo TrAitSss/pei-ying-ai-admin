@@ -5,10 +5,14 @@ const api = axios.create({
   timeout: 30000,
 })
 
+// 自动给路径加尾部斜杠，避免 307 重定向到 HTTP
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
+  }
+  if (config.url && !config.url.includes('?') && !config.url.endsWith('/')) {
+    config.url += '/'
   }
   return config
 })

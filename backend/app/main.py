@@ -48,10 +48,10 @@ app.add_middleware(
 )
 
 app.include_router(auth.router, prefix="/api/auth", tags=["认证"])
-app.include_router(suppliers.router, prefix="/api/suppliers", tags=["供应商管理"], redirect_slashes=False)
-app.include_router(inventory.router, prefix="/api/inventory", tags=["库存管理"], redirect_slashes=False)
-app.include_router(templates.router, prefix="/api/templates", tags=["标书与文书生成"], redirect_slashes=False)
-app.include_router(dashboard.router, prefix="/api/dashboard", tags=["仪表盘"], redirect_slashes=False)
+app.include_router(suppliers.router, prefix="/api/suppliers", tags=["供应商管理"])
+app.include_router(inventory.router, prefix="/api/inventory", tags=["库存管理"])
+app.include_router(templates.router, prefix="/api/templates", tags=["标书与文书生成"])
+app.include_router(dashboard.router, prefix="/api/dashboard", tags=["仪表盘"])
 
 @app.get("/health")
 async def health_check():
