@@ -1,0 +1,55 @@
+# 生产环境 Docker Compose - 适用于 VPS 部署
+# 用法：docker-compose -f docker-compose.prod.yml up -d --build
+# 需要先创建 .env 文件（参考 .env.example）
+
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: peiying-db-prod
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-peiying}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-peiying123}
+      POSTGRES_DB: ${DB_NAME:-peiying_ai}
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    networks:
+      - peiying-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: peiying-redis-prod
+    restart: always
+    networks:
+      - peiying-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: peiying-app-prod
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${DB_USER:-peiying}:${DB_PASSWORD:-peiying123}@db:5432/${DB_NAME:-peiying_ai}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-peiying-ai-secret-key-2026}
+      - DEBUG=false
+      - AUTO_SEED=true
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - CORS_ORIGINS=*
+    ports:
+      - "${PORT:-80}:8000"
+    depends_on:
+      - db
+      - redis
+    networks:
+      - peiying-network
+
+volumes:
+  postgres_data_prod:
+
+networks:
+  peiying-network:
+    driver: bridge
