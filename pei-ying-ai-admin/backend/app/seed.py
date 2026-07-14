@@ -43,27 +43,25 @@ async def auto_seed():
                 name="采购标书模板",
                 template_type="tender",
                 description="适用于学校物资采购的标书",
-                content="""# {{ school_name }} 采购标书
+                content="""{{ school_name }} 采购标书
 
-**项目名称：** {{ project_name }}
-**标书编号：** {{ tender_no }}
-**日期：** {{ date }}
+项目名称：{{ project_name }}
+标书编号：{{ tender_no }}
+日期：{{ date }}
 
-## 一、项目概述
+一、项目概述
 {{ description }}
 
-## 二、采购清单
+二、采购清单
 {% for item in items %}{{ loop.index }}. {{ item.name }} - 数量: {{ item.quantity }} - 预算: HK${{ item.budget }}
 {% endfor %}
-## 三、合计预算
-**HK${{ total_budget }}**
+三、合计预算：HK${{ total_budget }}
 
-## 四、投标要求
-- 供应商须为香港注册公司
-- 交货期不超过 {{ delivery_days }} 个工作日
-- 质保期不少于 {{ warranty_months }} 个月
+四、投标要求
+1. 供应商须为香港注册公司
+2. 交货期不超过 {{ delivery_days }} 个工作日
+3. 质保期不少于 {{ warranty_months }} 个月
 
----
 联系人：Steven
 电话：(852) XXXX XXXX""",
                 variables=[
@@ -83,20 +81,19 @@ async def auto_seed():
                 name="报价单模板",
                 template_type="quotation",
                 description="适用于向供应商询价的报价单",
-                content="""# 报价单 (Quotation)
+                content="""报价单 (Quotation)
 
-**致：** {{ supplier_name }}
-**报价日期：** {{ date }}
-**报价编号：** QT-{{ date }}-{{ seq }}
+致：{{ supplier_name }}
+报价日期：{{ date }}
+报价编号：QT-{{ date }}-{{ seq }}
 
-## 费用明细
 | 序号 | 项目 | 规格 | 数量 | 单价(HK$) | 总价(HK$) |
 |------|------|------|------|-----------|-----------|
 {% for item in items %}| {{ loop.index }} | {{ item.name }} | {{ item.spec }} | {{ item.qty }} | {{ item.unit_price }} | {{ item.total }} |
 {% endfor %}
+
 |      |      |      | 合计 |            | {{ grand_total }} |
 
----
 有效期：{{ valid_days }} 天
 联系人：Steven""",
                 variables=[
@@ -113,23 +110,23 @@ async def auto_seed():
                 name="维修服务报价模板",
                 template_type="quotation",
                 description="适用于维修/保养服务的报价",
-                content="""# 维修服务报价单
+                content="""维修服务报价单
 
-**服务对象：** {{ client_name }}
-**日期：** {{ date }}
-**报价编号：** MS-{{ date }}-001
+服务对象：{{ client_name }}
+日期：{{ date }}
+报价编号：MS-{{ date }}-001
 
-## 一、服务内容
+一、服务内容
 {{ service_description }}
 
-## 二、费用明细
+二、费用明细
 | 项目 | 费用(HK$) |
 |------|-----------|
 {% for fee in fees %}| {{ fee.name }} | {{ fee.amount }} |
 {% endfor %}
 | 合计 | {{ total_amount }} |
 
-## 三、服务承诺
+三、服务承诺
 - 响应时间：{{ response_time }}
 - 服务期限：{{ service_period }}
 - 质保：{{ warranty }}""",

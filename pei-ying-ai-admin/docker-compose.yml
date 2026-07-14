@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: peiying-db
+    environment:
+      POSTGRES_USER: peiying
+      POSTGRES_PASSWORD: peiying123
+      POSTGRES_DB: peiying_ai
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - peiying-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: peiying-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - peiying-network
+
+  backend:
+    build: ./backend
+    container_name: peiying-backend
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://peiying:peiying123@db:5432/peiying_ai
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=peiying-ai-secret-key-2026
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    volumes:
+      - ./backend/app:/app/app
+      - uploads:/app/uploads
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    networks:
+      - peiying-network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build: ./frontend
+    container_name: peiying-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - peiying-network
+
+volumes:
+  postgres_data:
+  uploads:
+
+networks:
+  peiying-network:
+    driver: bridge
