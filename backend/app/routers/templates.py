@@ -68,11 +68,9 @@ async def generate_document(
     if not template:
         raise HTTPException(status_code=404, detail="模板不存在")
     
-    # 使用 Jinja2 渲染
     jinja_template = JinjaTemplate(template.content or "")
     rendered_content = jinja_template.render(**request.variables_data)
     
-    # 生成 Word 文档
     doc = DocxDocument()
     for line in rendered_content.split('\n'):
         if line.strip():
@@ -100,25 +98,8 @@ async def generate_document(
         "title": gen_doc.title,
         "status": gen_doc.status,
         "file_path": output_path,
+        "download_url": f"/api/templates/documents/{gen_doc.id}/download",
     }
-
-@router.get("/{template_id}/preview")
-async def preview_template(
-    template_id: int,
-    variables: str = "{}",
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    result = await db.execute(select(Template).where(Template.id == template_id))
-    template = result.scalar_one_or_none()
-    if not template:
-        raise HTTPException(status_code=404, detail="模板不存在")
-    
-    vars_dict = json.loads(variables)
-    jinja_template = JinjaTemplate(template.content or "")
-    rendered = jinja_template.render(**vars_dict)
-    
-    return {"preview": rendered, "variables_used": list(vars_dict.keys())}
 
 @router.get("/documents/list")
 async def list_documents(
@@ -157,3 +138,21 @@ async def download_document(
         filename=f"{doc.title}.docx",
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     )
+
+@router.get("/{template_id}/preview")
+async def preview_template(
+    template_id: int,
+    variables: str = "{}",
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = await db.execute(select(Template).where(Template.id == template_id))
+    template = result.scalar_one_or_none()
+    if not template:
+        raise HTTPException(status_code=404, detail="模板不存在")
+    
+    vars_dict = json.loads(variables)
+    jinja_template = JinjaTemplate(template.content or "")
+    rendered = jinja_template.render(**vars_dict)
+    
+    return {"preview": rendered, "variables_used": list(vars_dict.keys())}

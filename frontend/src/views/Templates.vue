@@ -64,10 +64,10 @@
             <div class="doc-title">{{ doc.title }}</div>
             <div class="doc-date">{{ formatDate(doc.created_at) }}</div>
           </div>
-          <a :href="doc.download_url" class="download-btn" target="_blank">
+          <button class="download-btn" @click="downloadDoc(doc)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             下载
-          </a>
+          </button>
         </div>
       </div>
     </div>
@@ -97,7 +97,10 @@
           <p style="font-size:14px;color:#9ca3af;margin-bottom:20px;">{{ successDoc.title }}.docx 已准备好</p>
           <div style="display:flex;gap:10px;justify-content:center;">
             <button class="cancel-btn" @click="successDoc = null">关闭</button>
-            <a :href="successDoc.download_url" class="submit-btn" target="_blank" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">下载文档</a>
+            <button class="submit-btn" @click="downloadDoc(successDoc)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              下载文档
+            </button>
           </div>
         </div>
       </div>
@@ -168,6 +171,27 @@ async function submitGenerate(tpl) {
   } finally { generating.value = false }
 }
 
+async function downloadDoc(doc) {
+  try {
+    const token = localStorage.getItem('token')
+    const res = await fetch(doc.download_url, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    if (!res.ok) throw new Error('下载失败')
+    const blob = await res.blob()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${doc.title}.docx`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+  } catch (e) {
+    alert('下载失败: ' + e.message)
+  }
+}
+
 async function saveTemplate() {
   if (!form.name) { alert('请填写模板名称'); return }
   try { await api.post('/templates', form); showDialog.value = false; form.name=''; form.description=''; form.content=''; loadTemplates() } catch (e) { alert('保存失败') }
@@ -222,7 +246,7 @@ async function saveTemplate() {
 .doc-info { flex: 1; }
 .doc-title { font-size: 15px; font-weight: 500; color: #ececec; }
 .doc-date { font-size: 12px; color: #6b7280; margin-top: 2px; }
-.download-btn { display: flex; align-items: center; gap: 6px; background: rgba(16,163,127,0.12); color: #10a37f; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; text-decoration: none; transition: all 0.15s; flex-shrink: 0; }
+.download-btn { display: flex; align-items: center; gap: 6px; background: rgba(16,163,127,0.12); color: #10a37f; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; border: none; cursor: pointer; transition: all 0.15s; flex-shrink: 0; }
 .download-btn:hover { background: rgba(16,163,127,0.2); }
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 .modal { background: #2f2f2f; border: 1px solid #3f3f3f; border-radius: 16px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
