@@ -1,6 +1,7 @@
 import os
 import json
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi.responses import FileResponse as FastAPIFileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List, Optional
@@ -118,3 +119,41 @@ async def preview_template(
     rendered = jinja_template.render(**vars_dict)
     
     return {"preview": rendered, "variables_used": list(vars_dict.keys())}
+
+@router.get("/documents/list")
+async def list_documents(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(GeneratedDocument).order_by(GeneratedDocument.created_at.desc())
+    )
+    docs = result.scalars().all()
+    return [
+        {
+            "id": d.id,
+            "title": d.title,
+            "status": d.status,
+            "created_at": d.created_at.isoformat() if d.created_at else None,
+            "download_url": f"/api/templates/documents/{d.id}/download",
+        }
+        for d in docs
+    ]
+
+@router.get("/documents/{doc_id}/download")
+async def download_document(
+    doc_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = await db.execute(select(GeneratedDocument).where(GeneratedDocument.id == doc_id))
+    doc = result.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(status_code=404, detail="文档不存在")
+    if not os.path.isfile(doc.file_path):
+        raise HTTPException(status_code=404, detail="文件已丢失")
+    return FastAPIFileResponse(
+        doc.file_path,
+        filename=f"{doc.title}.docx",
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
