@@ -1,7 +1,4 @@
 # Steven AI 行政助手 - 生产环境精简依赖
-# 移除了 paddleocr, paddlepaddle, chromadb, langchain, pandas 等大型库
-# 这些库在 Steven 的 3 项需求中不需要
-
 fastapi==0.111.0
 uvicorn[standard]==0.30.0
 sqlalchemy[asyncio]==2.0.31
@@ -14,6 +11,3 @@ bcrypt==4.0.1
 jinja2==3.1.4
 python-docx==1.1.2
 openpyxl==3.1.5
-
-# 可选：如需 AI 辅助功能，取消下面这行的注释
-# openai==1.35.0

@@ -17,22 +17,25 @@ async def auto_seed():
         await conn.run_sync(Base.metadata.create_all)
 
     async with AsyncSessionLocal() as db:
-        # 检查是否已有数据
-        result = await db.execute(select(User))
+        # 检查是否已有种子数据（以供应商为判断依据）
+        result = await db.execute(select(Supplier))
         if result.scalars().first():
-            print("[seed] 数据库已有数据，跳过初始化")
+            print("[seed] 数据库已有种子数据，跳过初始化")
             return
 
-        # 1. 创建用户
-        user = User(
-            username="steven",
-            email="steven@peiying.edu.hk",
-            full_name="Steven",
-            hashed_password=get_password_hash("steven123"),
-            department="校务处",
-        )
-        db.add(user)
-        await db.flush()
+        # 1. 创建用户（如果不存在）
+        result = await db.execute(select(User).where(User.username == "steven"))
+        user = result.scalar_one_or_none()
+        if not user:
+            user = User(
+                username="steven",
+                email="steven@peiying.edu.hk",
+                full_name="Steven",
+                hashed_password=get_password_hash("steven123"),
+                department="校务处",
+            )
+            db.add(user)
+            await db.flush()
 
         # 2. 创建标书/报价单模板
         templates = [
